@@ -140,7 +140,7 @@ class App:
             row=0, column=0, sticky="w", pady=(0, self.px(6))
         )
         self.preset_var = tk.StringVar(value=load_preset_key())
-        indent = self.px(21)
+        indent = self.px(18)  # aligns with the radio label text, not the indicator
         for i, preset in enumerate(PRESETS):
             radio = ttk.Radiobutton(
                 self.preset_frame,
@@ -185,6 +185,11 @@ class App:
             "folder": ttk.Button(self.button_row, text="Open folder", command=self._open_folder),
             "close": ttk.Button(self.button_row, text="Close", command=self._on_close),
         }
+        # Reserve the tallest state's height so the window never jumps when switching states.
+        root.update_idletasks()
+        content = (self.preset_frame, self.progress_frame, self.result_frame)
+        outer.rowconfigure(2, minsize=max(frame.winfo_reqheight() for frame in content))
+
         root.bind("<Return>", lambda _e: self._invoke_default())
         root.bind("<Escape>", lambda _e: self._on_close())
 
@@ -409,6 +414,10 @@ class App:
     def _screenshot(self, name: str, then_quit: bool = False) -> None:
         from PIL import ImageGrab
 
+        if sys.platform == "win32":
+            import ctypes
+
+            ctypes.windll.user32.SetCursorPos(0, 0)
         self.root.update()
         assert self.screenshot_dir is not None
         self.screenshot_dir.mkdir(parents=True, exist_ok=True)
