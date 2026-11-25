@@ -1,0 +1,4 @@
+# Pinned runtime + build dependencies for reproducible Windows builds.
+pikepdf==10.18.2
+pillow==13.0.0
+pyinstaller==6.22.3

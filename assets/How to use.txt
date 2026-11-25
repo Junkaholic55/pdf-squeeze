@@ -1,0 +1,35 @@
+PDF Squeeze - make PDFs with pictures smaller
+=============================================
+
+Setup (once)
+------------
+1. Copy the whole PDFSqueeze folder somewhere you can write to, for example Documents\PDFSqueeze.
+   Keep the "_internal" folder next to PDFSqueeze.exe - the app needs it.
+2. Right-click PDFSqueeze.exe > Show more options > Send to > Desktop (create shortcut).
+
+Nothing is installed. To remove it, delete the folder.
+
+Use
+---
+1. Drag a PDF onto PDFSqueeze.exe or its desktop shortcut.
+   (Or double-click it and pick a PDF.)
+2. Pick a compression level:
+     High quality - 200 DPI, for printing and fine detail
+     Balanced     - 150 DPI, good for email and archiving
+     Smallest     - 96 DPI, for upload limits and on-screen reading
+3. Click Compress.
+
+A smaller copy is saved next to the original as "<name>_compressed.pdf".
+The original file is never changed.
+Text stays selectable and searchable; links, bookmarks and forms are kept.
+
+If it says "Already optimized", the PDF cannot be made meaningfully smaller at that level.
+
+First run
+---------
+Windows may show "Windows protected your PC" because the app is not code-signed.
+Click "More info", then "Run anyway".
+
+Problems
+--------
+A log is kept at %LOCALAPPDATA%\PDFSqueeze\log.txt

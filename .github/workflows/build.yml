@@ -1,0 +1,82 @@
+name: Build Windows app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Build exe
+        run: |
+          python tools/write_version_info.py build/version_info.txt
+          pyinstaller --noconfirm --clean PDFSqueeze.spec
+
+      - name: Smoke-test the built exe
+        run: |
+          $work = New-Item -ItemType Directory -Force smoke
+          python -c "from pathlib import Path; from tests.fixtures import make_rgb_scan; make_rgb_scan(Path('smoke/scan.pdf'))"
+          $p = Start-Process dist/PDFSqueeze/PDFSqueeze.exe -ArgumentList '--selftest', "$work\scan.pdf", "$work\out.pdf", 'balanced' -PassThru
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "Self-test timed out" }
+          if ($p.ExitCode -ne 0) { throw "Self-test exit code $($p.ExitCode)" }
+          $in = (Get-Item "$work\scan.pdf").Length; $out = (Get-Item "$work\out.pdf").Length
+          Write-Host "Self-test: $in -> $out bytes"
+          if ($out -ge $in) { throw "Output is not smaller" }
+
+      - name: Screenshot the window
+        run: |
+          $p = Start-Process dist/PDFSqueeze/PDFSqueeze.exe -ArgumentList '--screenshots', "$PWD\screenshots", "$PWD\smoke\scan.pdf" -PassThru
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "Screenshot run timed out" }
+          if ($p.ExitCode -ne 0) { throw "Screenshot run exit code $($p.ExitCode)" }
+          Get-ChildItem screenshots
+
+      - name: Package
+        run: |
+          Copy-Item "assets/How to use.txt" "dist/PDFSqueeze/How to use.txt"
+          Compress-Archive -Path dist/PDFSqueeze -DestinationPath PDFSqueeze-win64.zip
+          Get-Item PDFSqueeze-win64.zip | Select-Object Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PDFSqueeze-win64
+          path: PDFSqueeze-win64.zip
+          if-no-files-found: error
+
+      - name: Collect app log
+        if: always()
+        run: |
+          New-Item -ItemType Directory -Force screenshots | Out-Null
+          Copy-Item "$env:LOCALAPPDATA\PDFSqueeze\log.txt" screenshots/ -ErrorAction SilentlyContinue
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diagnostics
+          path: screenshots/
+          if-no-files-found: ignore

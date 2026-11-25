@@ -1,0 +1,29 @@
+[project]
+name = "pdf-squeeze"
+version = "1.0.0"
+description = "Portable Windows tool that shrinks PDFs by recompressing their images"
+requires-python = ">=3.12"
+dependencies = [
+    "pikepdf>=10.17",
+    "Pillow>=11",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pypdfium2>=4",
+    "ruff>=0.8",
+]
+build = [
+    "pyinstaller>=6.11",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
